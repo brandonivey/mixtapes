@@ -5,11 +5,10 @@ import os
 import shlex
 from twisted.internet.threads import blockingCallFromThread
 from twisted.internet.utils import getProcessValue
-import subprocess
 import glob
 import shutil
 import MySQLdb
-import sys
+
 
 sql_cred = {
     "host": "tms-db.czsy4cv8uhnr.us-east-1.rds.amazonaws.com",
@@ -19,25 +18,16 @@ sql_cred = {
 }
 
 
-# A note about python syntax
-#
-# This script makes frequant use of * and ** in functions funcs.
-# func(*[1, 2, 3]) is the exact same thing as func(1, 2, 3)
-# func(*{'foo': 1, 'bar': 2, 'baz': 3}) is the exact same thing as:
-# func(foo=1, bar=2, baz=3)
-#
-# 'some %s followed by %s text' % ('text', 'other') is the same thing as
-# 'some text followed by other text'
-
-
-
 def debug(msg, level=1):
     """
     Outputs messages. More useful that print because it can be silenced.
     """
     #the level doesn't really matter, to be honest
     if level <= 2:
-        print msg
+        print(msg)
+
+
+reactor = None
 
 
 class Connection:
@@ -53,6 +43,7 @@ class Connection:
     '''
     url_base = 'http://themixtapesite.com/wp-content/uploads/gravity_forms/1-9e5dc27086c8b2fd2e48678e1f54f98c/2013/02/mixtape2/'
     s3_path = '/export/s3-mixtape2/'
+
     def __enter__ (self):
         """
         Connects to S3 server, establishes connection number
@@ -111,7 +102,7 @@ class Connection:
         self.counter.close()
 
 
-def strip(full_path, target_path):
+def generate_strip(full_path, target_path):
     '''
     Takes the file located at full_path, removes 1D3 tags and rencodes at
     128kbps, then write that file to target_path
@@ -122,7 +113,6 @@ def strip(full_path, target_path):
             full_path,
             target_path
         )
-    #cmd_string = 'cp %s %s' % (full_path, target_path)
     debug('CMD: ' + cmd_string)
     cmd = shlex.split(cmd_string)
     # The command must be an array properly split, shlex does that for us
@@ -139,9 +129,31 @@ def strip(full_path, target_path):
     # args as the second
 
     if return_code != 0:
-        debug("Warning: FFMpeg returned nonzero code.")
+        debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
         return False
     return True
+
+
+def generate_preview(full_path, target_path):
+    """
+    Generates 30 second preview mp3
+    """
+    debug('Creating preview "%s" to "%s"' % (full_path, target_path))
+
+    cmd_string = '/root/bin/ffmpeg -t 30 -acodec copy -i "%s" "%s"' % (
+            full_path,
+            target_path
+        )
+    debug('CMD: ' + cmd_string)
+    cmd = shlex.split(cmd_string)
+
+    return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
+
+    if return_code != 0:
+        debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
+        return False
+    return True
+
 
 def zip_folder(folder, name=None):
     """
@@ -173,6 +185,7 @@ def clear_dir(path="data"):
             os.remove(os.path.join(path, fname))
             # removes the file
 
+
 def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
     """
     Upload, Rencode, Reupload each MP3 in zip_path
@@ -187,9 +200,14 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
     debug("Loading ZIP file for reading")
     mixtape = zipfile.ZipFile(zip_path, 'r')
 
+    BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+    FULL_DIR = os.path.join(BASE_PATH, 'full')
+    STRIP_DIR = os.path.join(BASE_PATH, 'stripped')
     debug('Making temp folders')
-    os.mkdir('full')
-    os.mkdir('stripped')
+    if not os.path.exists(FULL_DIR):
+        os.mkdir(FULL_DIR)
+    if not os.path.exists(STRIP_DIR):
+        os.mkdir(STRIP_DIR)
     try:
         # Extract each file in the ZIP that ends with mp3 to the full folder
         # and then the stripped folder. If an error is raised, the folders we
@@ -198,7 +216,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
             if name.lower().endswith('mp3') and "MACOSX" not in name:
                 basename = os.path.basename(name)
                 if not basename.startswith("."):
-                    path = os.path.join('.', 'full', os.path.basename(name))
+                    path = os.path.join(FULL_DIR, os.path.basename(name))
                     # Intelligently joins paths, making this script cross-platform
                     debug('Extracting "%s" to "%s"' % (name, path))
                     data = mixtape.read(name)
@@ -211,28 +229,28 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
         timing.log("Finished extracting", timing.clock() - timing.start)
         # Upload all of the files, stripping copies into the stripped folder
         with Connection() as conn:
-            for name in os.listdir('full'):
+            for name in os.listdir(FULL_DIR):
                 local_start_time = timing.clock()
                 debug('Processing "%s"' % name)
-                full_path = os.path.join('.', 'full', name)
-                stripped_path = os.path.join('.', 'stripped', name)
-                if strip(full_path, target_path=stripped_path):
-                    conn.upload(name, local_dir='full')
-                    conn.upload(name, local_dir='stripped', remote_dir="128/")
+                full_path = os.path.join(FULL_DIR, name)
+                stripped_path = os.path.join(STRIP_DIR, name)
+                if generate_strip(full_path, target_path=stripped_path):
+                    conn.upload(name, local_dir=FULL_DIR)
+                    conn.upload(name, local_dir=STRIP_DIR, remote_dir="128/")
                 else:
                     debug("Not uploading because stripping apaprently failed")
                 timing.log(
                     "Finished processing \"%s\"" % name,
                     timing.clock() - local_start_time
                 )
-            zipped_name = zip_folder('full', name=os.path.basename(zip_path))
+            zipped_name = zip_folder(FULL_DIR, name=os.path.basename(zip_path))
             conn.upload(zipped_name)
             os.remove(zipped_name)
     finally:
         debug('Cleaning up')
         if not keep_dirs:
-            shutil.rmtree('full')
-            shutil.rmtree('stripped')
+            shutil.rmtree(FULL_DIR)
+            shutil.rmtree(STRIP_DIR)
         if not keep_orig:
             os.remove(zip_path)
         if not save_rest:
