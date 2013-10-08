@@ -110,9 +110,9 @@ def generate_strip(full_path, target_path):
     debug('Stripping "%s" to "%s"' % (full_path, target_path))
 
     cmd_string = '/root/bin/ffmpeg -v debug -i "%s" -b:a 128k -loglevel error -map_metadata -1 -map 0:a "%s"' % (
-            full_path,
-            target_path
-        )
+        full_path,
+        target_path
+    )
     debug('CMD: ' + cmd_string)
     cmd = shlex.split(cmd_string)
     # The command must be an array properly split, shlex does that for us
@@ -141,9 +141,9 @@ def generate_preview(full_path, target_path):
     debug('Creating preview "%s" to "%s"' % (full_path, target_path))
 
     cmd_string = '/root/bin/ffmpeg -t 30 -acodec copy -i "%s" "%s"' % (
-            full_path,
-            target_path
-        )
+        full_path,
+        target_path
+    )
     debug('CMD: ' + cmd_string)
     cmd = shlex.split(cmd_string)
 
@@ -183,7 +183,6 @@ def clear_dir(path="data"):
         if not fname.lower().endswith(".zip") and not fname.startswith("."):
             # exclude yet unprocessed ZIPs and hidden files
             os.remove(os.path.join(path, fname))
-            # removes the file
 
 
 def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
@@ -203,11 +202,14 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
     BASE_PATH = os.path.dirname(os.path.abspath(__file__))
     FULL_DIR = os.path.join(BASE_PATH, 'full')
     STRIP_DIR = os.path.join(BASE_PATH, 'stripped')
+    PREVIEW_DIR = os.path.join(BASE_PATH, 'preview')
     debug('Making temp folders')
     if not os.path.exists(FULL_DIR):
         os.mkdir(FULL_DIR)
     if not os.path.exists(STRIP_DIR):
         os.mkdir(STRIP_DIR)
+    if not os.path.exists(PREVIEW_DIR):
+        os.mkdir(PREVIEW_DIR)
     try:
         # Extract each file in the ZIP that ends with mp3 to the full folder
         # and then the stripped folder. If an error is raised, the folders we
@@ -239,9 +241,12 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                     conn.upload(name, local_dir=STRIP_DIR, remote_dir="128/")
                 else:
                     debug("Not uploading because stripping apaprently failed")
+                if generate_preview(full_path, target_path=os.path.join(PREVIEW_DIR, name)):
+                    conn.upload(name, local_dir=PREVIEW_DIR, remote_dir="preview/")
+                else:
+                    debug("Unable to generate preview file")
                 timing.log(
-                    "Finished processing \"%s\"" % name,
-                    timing.clock() - local_start_time
+                    "Finished processing \"%s\"" % name, timing.clock() - local_start_time
                 )
             zipped_name = zip_folder(FULL_DIR, name=os.path.basename(zip_path))
             conn.upload(zipped_name)
@@ -251,6 +256,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
         if not keep_dirs:
             shutil.rmtree(FULL_DIR)
             shutil.rmtree(STRIP_DIR)
+            shutil.rmtree(PREVIEW_DIR)
         if not keep_orig:
             os.remove(zip_path)
         if not save_rest:
