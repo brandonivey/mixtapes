@@ -144,7 +144,7 @@ def generate_preview(full_path, target_path):
         full_path,
         target_path
     )
-    debug('CMD: ' + cmd_string)
+    debug('Executing: ' + cmd_string)
     cmd = shlex.split(cmd_string)
 
     return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
@@ -153,6 +153,39 @@ def generate_preview(full_path, target_path):
         debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
         return False
     return True
+
+
+def generate_video(full_path, target_path, image_path=None):
+    """
+    Generates video to be uploaded to youtube
+    """
+    debug('Creating video from "%s" to "%s"' % (full_path, target_path))
+
+    if image_path:
+        cmd_string = 'ffmpeg -loop 1 -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
+            image_path,
+            full_path,
+            target_path
+        )
+    else:
+        cmd_string = 'ffmpeg -loop 1 -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
+            full_path,
+            target_path
+        )
+    debug('Executing: ' + cmd_string)
+    cmd = shlex.split(cmd_string)
+
+    return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
+
+    if return_code != 0:
+        debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
+        return False
+    return True
+
+def get_images(directory):
+    images = []
+    images = glob.glob(os.path.join(directory, '*.jpg'))
+    return images
 
 
 def zip_folder(folder, name=None):
@@ -204,12 +237,10 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
     STRIP_DIR = os.path.join(BASE_PATH, 'stripped')
     PREVIEW_DIR = os.path.join(BASE_PATH, 'preview')
     debug('Making temp folders')
-    if not os.path.exists(FULL_DIR):
-        os.mkdir(FULL_DIR)
-    if not os.path.exists(STRIP_DIR):
-        os.mkdir(STRIP_DIR)
-    if not os.path.exists(PREVIEW_DIR):
-        os.mkdir(PREVIEW_DIR)
+    WORKING_DIRS = [FULL_DIR, STRIP_DIR, PREVIEW_DIR]
+    for wdir in WORKING_DIRS:
+        if not os.path.exists(wdir):
+            os.mkdir(wdir)
     try:
         # Extract each file in the ZIP that ends with mp3 to the full folder
         # and then the stripped folder. If an error is raised, the folders we
@@ -254,9 +285,8 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
     finally:
         debug('Cleaning up')
         if not keep_dirs:
-            shutil.rmtree(FULL_DIR)
-            shutil.rmtree(STRIP_DIR)
-            shutil.rmtree(PREVIEW_DIR)
+            for wdir in WORKING_DIRS:
+                shutil.rmtree(wdir)
         if not keep_orig:
             os.remove(zip_path)
         if not save_rest:
