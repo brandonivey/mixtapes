@@ -144,7 +144,7 @@ def generate_preview(full_path, target_path):
     """
     debug('Creating preview "%s" to "%s"' % (full_path, target_path))
 
-    cmd_string = '/root/bin/ffmpeg -t 30 -i "%s" -acodec copy "%s"' % (
+    cmd_string = '/root/bin/ffmpeg -t 30 -loglevel error -i "%s" -acodec copy "%s"' % (
         full_path,
         target_path
     )
@@ -159,13 +159,13 @@ def generate_video(full_path, target_path, image_path=None):
     debug('Creating video from "%s" to "%s"' % (full_path, target_path))
 
     if image_path:
-        cmd_string = 'ffmpeg -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
+        cmd_string = 'ffmpeg -loglevel error -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
             image_path,
             full_path,
             target_path
         )
     else:
-        cmd_string = 'ffmpeg -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
+        cmd_string = 'ffmpeg -loglevel error -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
             full_path,
             target_path
         )
