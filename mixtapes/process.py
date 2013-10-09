@@ -130,7 +130,7 @@ def generate_strip(full_path, target_path):
     '''
     debug('Stripping "%s" to "%s"' % (full_path, target_path))
 
-    cmd_string = '/root/bin/ffmpeg -i "%s" -b:a 128k -loglevel debug -map_metadata -1 -map 0:a "%s"' % (
+    cmd_string = '/root/bin/ffmpeg -i "%s" -b:a 128k -loglevel error -map_metadata -1 -map 0:a "%s"' % (
         full_path,
         target_path
     )
@@ -159,13 +159,13 @@ def generate_video(full_path, target_path, image_path=None):
     debug('Creating video from "%s" to "%s"' % (full_path, target_path))
 
     if image_path:
-        cmd_string = 'ffmpeg -loop 1 -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
+        cmd_string = 'ffmpeg -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
             image_path,
             full_path,
             target_path
         )
     else:
-        cmd_string = 'ffmpeg -loop 1 -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
+        cmd_string = 'ffmpeg -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
             full_path,
             target_path
         )
