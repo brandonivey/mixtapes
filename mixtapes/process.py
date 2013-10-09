@@ -28,6 +28,7 @@ def debug(msg, level=1):
 
 
 reactor = None
+ROOT_DIR = '/export/brick1'
 
 
 class Connection:
@@ -44,7 +45,7 @@ class Connection:
     url_base = 'http://themixtapesite.com/wp-content/uploads/gravity_forms/1-9e5dc27086c8b2fd2e48678e1f54f98c/2013/02/mixtape2/'
     s3_path = '/export/s3-mixtape2/'
 
-    def __enter__ (self):
+    def __enter__(self):
         """
         Connects to S3 server, establishes connection number
         """
@@ -62,7 +63,8 @@ class Connection:
         self.count = str(1 + int(self.counter.read()))
         debug("Mixtape counter incremented to %s, making dir" % self.count)
         self.s3_path += self.count
-        os.makedirs(self.s3_path)
+        if not os.path.exists(self.s3_path):
+            os.makedirs(self.s3_path)
         return self
 
     def upload(self, fname, local_dir=".", remote_dir=None):
@@ -301,7 +303,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
         if not keep_orig:
             os.remove(zip_path)
         if not save_rest:
-            clear_dir("data")
+            clear_dir(os.path.join(ROOT_DIR, "data"))
     url = conn.url + zipped_name
     debug("ZIP processed")
     return url
@@ -380,8 +382,7 @@ if __name__ == '__main__':
         help="Keep the temporary directories instead of deleteing")
     parser.add_argument('-r', '--keep-orig', action="store_true",
         default=False, help='Remove original ZIP')
-    parser.add_argument('-s', '--save-rest', action="store_true", default=False)
-
+    parser.add_argument('-s', '--save-rest', action="store_true", default=True)
 
     # Process command line arguments
     args = vars(parser.parse_args())
