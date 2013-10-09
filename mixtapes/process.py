@@ -120,15 +120,19 @@ def generate_strip(full_path, target_path):
     # The command must be an array properly split, shlex does that for us
     # cmd is the first item, *args is the rest of the items
 
-    return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
-    # this is a really complicated bit
-    # previously, this was done using the normal subprocess module, and hung,
-    # since subprocesses are not thread-safe
-    # so now, I'm asking the main twisted reactor to call getProcessValue (which
-    # is like subprocess.call except it immediatly returns a Deffered and block
-    # this thread until the process exits (until the Deffered fires)
-    # getProcessValue expects the executable as it's first arg and an array of
-    # args as the second
+    try:
+        return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
+        # this is a really complicated bit
+        # previously, this was done using the normal subprocess module, and hung,
+        # since subprocesses are not thread-safe
+        # so now, I'm asking the main twisted reactor to call getProcessValue (which
+        # is like subprocess.call except it immediatly returns a Deffered and block
+        # this thread until the process exits (until the Deffered fires)
+        # getProcessValue expects the executable as it's first arg and an array of
+        # args as the second
+    except Exception as exc:
+        debug("Caught exception executing call: %s" % exc)
+        return False
 
     if return_code != 0:
         debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
@@ -149,7 +153,11 @@ def generate_preview(full_path, target_path):
     debug('Executing: ' + cmd_string)
     cmd = shlex.split(cmd_string)
 
-    return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
+    try:
+        return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
+    except Exception as exc:
+        debug("Caught exception executing call: %s" % exc)
+        return False
 
     if return_code != 0:
         debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
@@ -177,7 +185,11 @@ def generate_video(full_path, target_path, image_path=None):
     debug('Executing: ' + cmd_string)
     cmd = shlex.split(cmd_string)
 
-    return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
+    try:
+        return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
+    except Exception as exc:
+        debug("Caught exception executing call: %s" % exc)
+        return False
 
     if return_code != 0:
         debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
