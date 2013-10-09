@@ -182,6 +182,7 @@ def generate_video(full_path, target_path, image_path=None):
         return False
     return True
 
+
 def get_images(directory):
     images = []
     images = glob.glob(os.path.join(directory, '*.jpg'))
@@ -236,8 +237,9 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
     FULL_DIR = os.path.join(BASE_PATH, 'full')
     STRIP_DIR = os.path.join(BASE_PATH, 'stripped')
     PREVIEW_DIR = os.path.join(BASE_PATH, 'preview')
+    VIDEO_DIR = os.path.join(BASE_PATH, 'video')
     debug('Making temp folders')
-    WORKING_DIRS = [FULL_DIR, STRIP_DIR, PREVIEW_DIR]
+    WORKING_DIRS = [FULL_DIR, STRIP_DIR, PREVIEW_DIR, VIDEO_DIR]
     for wdir in WORKING_DIRS:
         if not os.path.exists(wdir):
             os.mkdir(wdir)
@@ -267,13 +269,22 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                 debug('Processing "%s"' % name)
                 full_path = os.path.join(FULL_DIR, name)
                 stripped_path = os.path.join(STRIP_DIR, name)
+                preview_path = os.path.join(PREVIEW_DIR, name)
                 if generate_strip(full_path, target_path=stripped_path):
                     conn.upload(name, local_dir=FULL_DIR)
                     conn.upload(name, local_dir=STRIP_DIR, remote_dir="128/")
                 else:
                     debug("Not uploading because stripping apaprently failed")
-                if generate_preview(full_path, target_path=os.path.join(PREVIEW_DIR, name)):
-                    conn.upload(name, local_dir=PREVIEW_DIR, remote_dir="preview/")
+                if generate_preview(full_path, target_path=preview_path):
+                    # conn.upload(name, local_dir=PREVIEW_DIR, remote_dir="preview/")
+                    video_path = os.path.join(VIDEO_DIR, name)
+                    video_path = video_path.replace('mp3', 'mp4')
+                    if generate_video(preview_path, video_path):
+                        ## upload to youtube
+                        # upload_video(video_path)
+                        pass
+                    else:
+                        debug("Unable to generate video file")
                 else:
                     debug("Unable to generate preview file")
                 timing.log(
