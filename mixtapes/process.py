@@ -134,7 +134,7 @@ def generate_strip(full_path, target_path):
         full_path,
         target_path
     )
-    
+
     return execute_external_call(cmd_string)
 
 
@@ -148,7 +148,7 @@ def generate_preview(full_path, target_path):
         full_path,
         target_path
     )
-    
+
     return execute_external_call(cmd_string)
 
 
@@ -159,17 +159,17 @@ def generate_video(full_path, target_path, image_path=None):
     debug('Creating video from "%s" to "%s"' % (full_path, target_path))
 
     if image_path:
-        cmd_string = 'ffmpeg -loglevel error -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
+        cmd_string = 'ffmpeg -loglevel error -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 128k -shortest "%s"' % (
             image_path,
             full_path,
             target_path
         )
     else:
-        cmd_string = 'ffmpeg -loglevel error -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 192k -shortest "%s"' % (
+        cmd_string = 'ffmpeg -loglevel error -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 128k -shortest "%s"' % (
             full_path,
             target_path
         )
-    
+
     return execute_external_call(cmd_string)
 
 
@@ -228,8 +228,9 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
     STRIP_DIR = os.path.join(BASE_PATH, 'stripped')
     PREVIEW_DIR = os.path.join(BASE_PATH, 'preview')
     VIDEO_DIR = os.path.join(BASE_PATH, 'video')
+    IMAGE_DIR = os.path.join(BASE_PATH, 'images')
     debug('Making temp folders')
-    WORKING_DIRS = [FULL_DIR, STRIP_DIR, PREVIEW_DIR, VIDEO_DIR]
+    WORKING_DIRS = [FULL_DIR, STRIP_DIR, PREVIEW_DIR, VIDEO_DIR, IMAGE_DIR]
     for wdir in WORKING_DIRS:
         if not os.path.exists(wdir):
             os.mkdir(wdir)
@@ -238,22 +239,29 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
         # and then the stripped folder. If an error is raised, the folders we
         # just just created will be removed ina the finally block of this try.
         for name in mixtape.namelist():
-            if name.lower().endswith('mp3') and "MACOSX" not in name:
-                basename = os.path.basename(name)
-                if not basename.startswith("."):
-                    path = os.path.join(FULL_DIR, os.path.basename(name))
-                    # Intelligently joins paths, making this script cross-platform
-                    debug('Extracting "%s" to "%s"' % (name, path))
-                    data = mixtape.read(name)
-                    f = open(path, 'w')
-                    f.write(data)
-                    f.close()
-            else:
-                # There is a bad file, raising a warning might be in order
-                debug('%s does not end on mp3 or is in MACOSX' % name)
+            if "MACOSX" not in name:
+                if name.lower().endswith('mp3'):
+                    basename = os.path.basename(name)
+                    if not basename.startswith("."):
+                        path = os.path.join(FULL_DIR, basename)
+                        debug('Extracting "%s" to "%s"' % (name, path))
+                        data = mixtape.read(name)
+                        f = open(path, 'w')
+                        f.write(data)
+                        f.close()
+                elif name.lower().endswith('jpg'):
+                    basename = os.path.basename(name)
+                    if not basename.startswith("."):
+                        path = os.path.join(IMAGE_DIR, basename)
+                        debug('Extracting image "%s" to "%s"' % (name, path))
+                        data = mixtape.read(name)
+                        f = open(path, 'w')
+                        f.write(data)
+                        f.close()
         timing.log("Finished extracting", timing.clock() - timing.start)
         # Upload all of the files, stripping copies into the stripped folder
         with Connection() as conn:
+            images = get_images(IMAGE_DIR)
             for name in os.listdir(FULL_DIR):
                 local_start_time = timing.clock()
                 debug('Processing "%s"' % name)
@@ -269,12 +277,20 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                     # conn.upload(name, local_dir=PREVIEW_DIR, remote_dir="preview/")
                     video_path = os.path.join(VIDEO_DIR, name)
                     video_path = video_path.replace('mp3', 'mp4')
-                    if generate_video(preview_path, target_path=video_path):
-                        ## upload to youtube
-                        # upload_video(video_path)
-                        pass
+                    if images:
+                        if generate_video(preview_path, target_path=video_path, image_path=images[0]):
+                            ## upload to youtube
+                            # upload_video(video_path)
+                            pass
+                        else:
+                            debug("Unable to generate video file")
                     else:
-                        debug("Unable to generate video file")
+                        if generate_video(preview_path, target_path=video_path):
+                            ## upload to youtube
+                            # upload_video(video_path)
+                            pass
+                        else:
+                            debug("Unable to generate video file")
                 else:
                     debug("Unable to generate preview file")
                 timing.log(
@@ -357,7 +373,7 @@ def process_mixtape(ID):
     url = process_zip(zip_path, **args)
     # The variable args is searched at the global scope
     # publish_post(int(ID), url, post_slug)
-    debug("Mixtape processed")
+    debug("Mixtape processed: %s" % url)
 
 
 if __name__ == '__main__':
