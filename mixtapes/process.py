@@ -104,52 +104,10 @@ class Connection:
         self.counter.close()
 
 
-def generate_strip(full_path, target_path):
-    '''
-    Takes the file located at full_path, removes 1D3 tags and rencodes at
-    128kbps, then write that file to target_path
-    '''
-    debug('Stripping "%s" to "%s"' % (full_path, target_path))
-
-    cmd_string = '/root/bin/ffmpeg -v debug -i "%s" -b:a 128k -loglevel error -map_metadata -1 -map 0:a "%s"' % (
-        full_path,
-        target_path
-    )
-    debug('CMD: ' + cmd_string)
-    cmd = shlex.split(cmd_string)
-    # The command must be an array properly split, shlex does that for us
-    # cmd is the first item, *args is the rest of the items
-
-    try:
-        return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
-        # this is a really complicated bit
-        # previously, this was done using the normal subprocess module, and hung,
-        # since subprocesses are not thread-safe
-        # so now, I'm asking the main twisted reactor to call getProcessValue (which
-        # is like subprocess.call except it immediatly returns a Deffered and block
-        # this thread until the process exits (until the Deffered fires)
-        # getProcessValue expects the executable as it's first arg and an array of
-        # args as the second
-    except Exception as exc:
-        debug("Caught exception executing call: %s" % exc)
-        return False
-
-    if return_code != 0:
-        debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
-        return False
-    return True
-
-
-def generate_preview(full_path, target_path):
+def execute_external_call(cmd_string):
     """
-    Generates 30 second preview mp3
+    Execute external system call
     """
-    debug('Creating preview "%s" to "%s"' % (full_path, target_path))
-
-    cmd_string = '/root/bin/ffmpeg -t 30 -acodec copy -i "%s" "%s"' % (
-        full_path,
-        target_path
-    )
     debug('Executing: ' + cmd_string)
     cmd = shlex.split(cmd_string)
 
@@ -163,6 +121,35 @@ def generate_preview(full_path, target_path):
         debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
         return False
     return True
+
+
+def generate_strip(full_path, target_path):
+    '''
+    Takes the file located at full_path, removes 1D3 tags and rencodes at
+    128kbps, then write that file to target_path
+    '''
+    debug('Stripping "%s" to "%s"' % (full_path, target_path))
+
+    cmd_string = '/root/bin/ffmpeg -i "%s" -b:a 128k -loglevel debug -map_metadata -1 -map 0:a "%s"' % (
+        full_path,
+        target_path
+    )
+    
+    return execute_external_call(cmd_string)
+
+
+def generate_preview(full_path, target_path):
+    """
+    Generates 30 second preview mp3
+    """
+    debug('Creating preview "%s" to "%s"' % (full_path, target_path))
+
+    cmd_string = '/root/bin/ffmpeg -t 30 -i "%s" -acodec copy "%s"' % (
+        full_path,
+        target_path
+    )
+    
+    return execute_external_call(cmd_string)
 
 
 def generate_video(full_path, target_path, image_path=None):
@@ -182,19 +169,8 @@ def generate_video(full_path, target_path, image_path=None):
             full_path,
             target_path
         )
-    debug('Executing: ' + cmd_string)
-    cmd = shlex.split(cmd_string)
-
-    try:
-        return_code = blockingCallFromThread(reactor, getProcessValue, cmd[0], cmd[1:])
-    except Exception as exc:
-        debug("Caught exception executing call: %s" % exc)
-        return False
-
-    if return_code != 0:
-        debug("Warning: FFMpeg returned nonzero code: %d" % return_code)
-        return False
-    return True
+    
+    return execute_external_call(cmd_string)
 
 
 def get_images(directory):
@@ -288,12 +264,12 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                     conn.upload(name, local_dir=FULL_DIR)
                     conn.upload(name, local_dir=STRIP_DIR, remote_dir="128/")
                 else:
-                    debug("Not uploading because stripping apaprently failed")
+                    debug("Not uploading because stripping apparently failed")
                 if generate_preview(full_path, target_path=preview_path):
                     # conn.upload(name, local_dir=PREVIEW_DIR, remote_dir="preview/")
                     video_path = os.path.join(VIDEO_DIR, name)
                     video_path = video_path.replace('mp3', 'mp4')
-                    if generate_video(preview_path, video_path):
+                    if generate_video(preview_path, target_path=video_path):
                         ## upload to youtube
                         # upload_video(video_path)
                         pass
