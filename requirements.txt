@@ -1,0 +1,6 @@
+## Requirements
+gdata
+MySQL-python
+pycurl
+twisted
+youtube-upload
