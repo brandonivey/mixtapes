@@ -223,7 +223,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
     debug("Loading ZIP file for reading")
     mixtape = zipfile.ZipFile(zip_path, 'r')
 
-    BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+    BASE_PATH = os.path.join(ROOT_DIR, 'output')
     FULL_DIR = os.path.join(BASE_PATH, 'full')
     STRIP_DIR = os.path.join(BASE_PATH, 'stripped')
     PREVIEW_DIR = os.path.join(BASE_PATH, 'preview')
@@ -383,9 +383,9 @@ if __name__ == '__main__':
         mixtape ZIP file and uploads it to S3')
     parser.add_argument('zip_path', help='Path to the ZIP file to be processed')
     parser.add_argument('-k', '--keep-dirs', action="store_true", default=False,
-        help="Keep the temporary directories instead of deleteing")
+                        help="Keep the temporary directories instead of deleteing")
     parser.add_argument('-r', '--keep-orig', action="store_true",
-        default=False, help='Remove original ZIP')
+                        default=False, help='Remove original ZIP')
     parser.add_argument('-s', '--save-rest', action="store_true", default=True)
 
     # Process command line arguments
