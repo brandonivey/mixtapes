@@ -323,7 +323,7 @@ def get_mixtape_info(post_id):
     cur.execute('SELECT meta_value FROM tm1_postmeta WHERE post_id = %s AND meta_key = "file_url"' % post_id)
     url = cur.fetchall()[0][0] # First row, first cell returned
     debug("URL: %s" % url)
-    path = "data/" + os.path.basename(url)
+    path = os.path.join(ROOT_DIR, "data", os.path.basename(url))
     cur.close()
     cur = db.cursor()
     cur.execute("SELECT post_title FROM tm1_posts WHERE ID = %s" % post_id)
