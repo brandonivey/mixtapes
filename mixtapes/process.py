@@ -159,7 +159,7 @@ def generate_video(full_path, target_path, image_path=None):
     debug('Creating video from "%s" to "%s"' % (full_path, target_path))
 
     if image_path:
-        cmd_string = 'ffmpeg -loglevel error -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 128k -shortest "%s"' % (
+        cmd_string = 'ffmpeg -loglevel error -loop 1 -i "%s" -i "%s" -c:v libx264 -c:a aac -strict experimental -b:a 128k -shortest "%s"' % (
             image_path,
             full_path,
             target_path
@@ -278,7 +278,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                     video_path = os.path.join(VIDEO_DIR, name)
                     video_path = video_path.replace('mp3', 'mp4')
                     if images:
-                        if generate_video(preview_path, target_path=video_path, image_path=images[0]):
+                        if generate_video(preview_path, target_path=video_path, image_path=images.pop()):
                             ## upload to youtube
                             # upload_video(video_path)
                             pass
