@@ -8,6 +8,7 @@ from twisted.internet.utils import getProcessValue
 import glob
 import shutil
 import MySQLdb
+import eyed3
 
 
 sql_cred = {
@@ -173,6 +174,17 @@ def generate_video(full_path, target_path, image_path=None):
     return execute_external_call(cmd_string)
 
 
+def upload_youtube(full_path, email, password, title, description):
+    """
+    send to youtube
+    """
+    cmd_string = 'youtube-upload --email="%s" --password=%s --title="%s" --description="%s" --category="Music" --keywords="mixtapes" %s' % (
+        email, password, title, description, full_path
+    )
+
+    return execute_external_call(cmd_string)
+
+
 def get_images(directory):
     images = []
     images = glob.glob(os.path.join(directory, '*.jpg'))
@@ -268,6 +280,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                 full_path = os.path.join(FULL_DIR, name)
                 stripped_path = os.path.join(STRIP_DIR, name)
                 preview_path = os.path.join(PREVIEW_DIR, name)
+                audiofile = eyed3.load(full_path)
                 if generate_strip(full_path, target_path=stripped_path):
                     conn.upload(name, local_dir=FULL_DIR)
                     conn.upload(name, local_dir=STRIP_DIR, remote_dir="128/")
@@ -287,8 +300,13 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                     else:
                         if generate_video(preview_path, target_path=video_path):
                             ## upload to youtube
-                            # upload_video(video_path)
-                            pass
+                            upload_youtube(
+                                full_path,
+                                'email@domain.com',
+                                'pass',
+                                audiofile.tag.title,
+                                '%s - %s' % (audiofile.tag.artist, audiofile.tag.title)
+                            )
                         else:
                             debug("Unable to generate video file")
                 else:
