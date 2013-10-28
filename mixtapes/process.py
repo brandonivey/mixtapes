@@ -323,6 +323,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                 stripped_path = os.path.join(STRIP_DIR, name)
                 preview_path = os.path.join(PREVIEW_DIR, name)
                 audiofile = eyed3.load(full_path)
+                audiofile = clean_mp3_id3_tags(audiofile)
                 if generate_strip(full_path, target_path=stripped_path):
                     conn.upload(name, local_dir=FULL_DIR)
                     conn.upload(name, local_dir=STRIP_DIR, remote_dir="128/")
