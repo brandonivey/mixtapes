@@ -213,6 +213,26 @@ def get_filter_list():
     return filter_list
 
 
+def filter_string(string, filter_list):
+    """ iterate through list of banned words and replace for given string """
+    for pattern, replacement in filter_list:
+        string = re.sub(pattern, replacement, string)
+    return string
+
+
+def clean_mp3_id3_tags(audiofile):
+    """ remove any ID3 tags that we don't like """
+    filter_list = get_filter_list()
+    audiofile.tag.artist = filter_string(audiofile.tag.artist, filter_list)
+    audiofile.tag.title = filter_string(audiofile.tag.title, filter_list)
+    audiofile.tag.album = filter_string(audiofile.tag.album, filter_list)
+    for comment in audiofile.tag.comments:
+        comment.text = ''
+        comment.data = ''
+    audiofile.tag.save()
+    return audiofile
+
+
 def zip_folder(folder, name=None):
     """
     Zips a folder. ZIP will named name.zip if name is given, folder.zip otherwise
