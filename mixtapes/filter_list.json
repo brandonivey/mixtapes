@@ -1,0 +1,15 @@
+[
+    "(datpiff exclusive)",
+    "(getrightmusic exclusive)"
+    "(getrightmusic)",
+    "exclusive to",
+    "exclusive from",
+    "exclusive",
+    "http://datpiff.com",
+    "datpiff.com",
+    "datpiff",
+    "getrightmusic",
+    "downloaded from",
+    "([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})",
+    "(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?",
+]

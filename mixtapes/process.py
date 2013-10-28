@@ -3,10 +3,13 @@ import timing
 import zipfile
 import os
 import shlex
-from twisted.internet.threads import blockingCallFromThread
-from twisted.internet.utils import getProcessValue
 import glob
 import shutil
+import re
+
+import simplejson as json
+from twisted.internet.threads import blockingCallFromThread
+from twisted.internet.utils import getProcessValue
 import MySQLdb
 import eyed3
 
@@ -174,6 +177,12 @@ def generate_video(full_path, target_path, image_path=None):
     return execute_external_call(cmd_string)
 
 
+def get_youtube_creds():
+    username = os.getenv('YOUTUBE_USER', '')
+    password = os.getenv('YOUTUBE_PWD', '')
+    return (username, password)
+
+
 def upload_youtube(full_path, email, password, title, description):
     """
     send to youtube
@@ -186,9 +195,22 @@ def upload_youtube(full_path, email, password, title, description):
 
 
 def get_images(directory):
+    """ return the full paths to all the image files in a given directory """
     images = []
     images = glob.glob(os.path.join(directory, '*.jpg'))
     return images
+
+
+def get_filter_list():
+    """ reads in a list of banned words from a json file and returns as a list """
+    json_file_path = os.path.join(os.path.dirname(__file__), 'filter_list.json')
+    filter_list = []
+    with open(json_file_path, 'r') as filter_file:
+        try:
+            filter_list = json.load(filter_file)
+        except json.JSONDecodeError as err:
+            debug("ERROR reading json file: %s" % err)
+    return filter_list
 
 
 def zip_folder(folder, name=None):
