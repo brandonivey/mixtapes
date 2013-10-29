@@ -303,8 +303,8 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                             ## upload to youtube
                             upload_youtube(
                                 full_path,
-                                'email@domain.com',
-                                'pass',
+                                config['youtube']['user'],
+                                config['youtube']['password'],
                                 audiofile.tag.title,
                                 '%s - %s' % (audiofile.tag.artist, audiofile.tag.title)
                             )
