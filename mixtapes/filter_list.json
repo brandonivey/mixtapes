@@ -1,7 +1,7 @@
 [
     ["(datpiff exclusive)", ""],
     ["(getrightmusic exclusive)", ""],
-    ["(getrightmusic)", ""]
+    ["(getrightmusic)", ""],
     ["exclusive to", ""],
     ["exclusive from", ""],
     ["exclusive", ""],
@@ -10,6 +10,6 @@
     ["datpiff", ""],
     ["getrightmusic", ""],
     ["downloaded from", ""],
-    ["([a-z0-9_\.-]+)@([\da-z\.-]+)\.([a-z\.]{2,6})", ""],
-    ["(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?", ""],
+    ["([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})", ""],
+    ["\\b(([\\w-]+://?|www[.])[^\\s()<>]+(?:\\([\\w\\d]+\\)|([^[:punct:]\\s]|/)))", ""]
 ]

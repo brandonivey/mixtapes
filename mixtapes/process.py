@@ -11,7 +11,7 @@ from twisted.internet.utils import getProcessValue
 import MySQLdb
 import eyed3
 
-from .util import ROOT_DIR, debug, get_config, get_filter_list, filter_string
+from util import ROOT_DIR, debug, get_config, get_filter_list, filter_string
 
 
 reactor = None
@@ -45,7 +45,8 @@ class Connection:
         # We want to get the mixtape counter located in the same directory as
         # the script, not the mixtape counter located in the working directory,
         # as those may not be the same
-        self.counter = open(script_path + '/mixtapes.counter', 'r+')
+        counter_file = os.path.join(ROOT_DIR, 'mixtapes.counter')
+        self.counter = open(counter_file, 'r+')
         # Open for writing and reading
         self.count = str(1 + int(self.counter.read()))
         debug("Mixtape counter incremented to %s, making dir" % self.count)
@@ -164,7 +165,7 @@ def upload_youtube(full_path, email, password, title, description):
     """
     send to youtube
     """
-    cmd_string = 'youtube-upload --email="%s" --password=%s --title="%s" --description="%s" --category="Music" --keywords="mixtapes" %s' % (
+    cmd_string = 'youtube-upload --email="%s" --password="%s" --title="%s" --description="%s" --category="Music" --keywords="mixtapes, themixtapesite.com" "%s"' % (
         email, password, title, description, full_path
     )
 
@@ -185,8 +186,8 @@ def clean_mp3_id3_tags(audiofile):
     audiofile.tag.title = filter_string(audiofile.tag.title, filter_list)
     audiofile.tag.album = filter_string(audiofile.tag.album, filter_list)
     for comment in audiofile.tag.comments:
-        comment.text = "downloaded from themixtapesite.com"
-        comment.data = "downloaded from themixtapesite.com"
+        comment.text = u'downloaded from themixtapesite.com'
+        comment.data = u'downloaded from themixtapesite.com'
     audiofile.tag.save()
     return audiofile
 

@@ -7,6 +7,8 @@
     },
     "youtube": {
         "user": "",
-        "password": ""
+        "password": "",
+        "user_id": "",
+        "channel_id": ""
     }
 }
