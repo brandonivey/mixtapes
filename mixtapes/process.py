@@ -5,34 +5,17 @@ import os
 import shlex
 import glob
 import shutil
-import re
 
-import simplejson as json
 from twisted.internet.threads import blockingCallFromThread
 from twisted.internet.utils import getProcessValue
 import MySQLdb
 import eyed3
 
-
-sql_cred = {
-    "host": "tms-db.czsy4cv8uhnr.us-east-1.rds.amazonaws.com",
-    "user": "tms_db_server",
-    "passwd": "^.E9U6WhiCoY{Fx",
-    "db": "tms_db_server"
-}
-
-
-def debug(msg, level=1):
-    """
-    Outputs messages. More useful that print because it can be silenced.
-    """
-    #the level doesn't really matter, to be honest
-    if level <= 2:
-        print(msg)
+from .util import ROOT_DIR, debug, get_config, get_filter_list, filter_string
 
 
 reactor = None
-ROOT_DIR = '/export/brick1'
+config = get_config()
 
 
 class Connection:
@@ -177,12 +160,6 @@ def generate_video(full_path, target_path, image_path=None):
     return execute_external_call(cmd_string)
 
 
-def get_youtube_creds():
-    username = os.getenv('YOUTUBE_USER', '')
-    password = os.getenv('YOUTUBE_PWD', '')
-    return (username, password)
-
-
 def upload_youtube(full_path, email, password, title, description):
     """
     send to youtube
@@ -201,25 +178,6 @@ def get_images(directory):
     return images
 
 
-def get_filter_list():
-    """ reads in a list of banned words from a json file and returns as a list """
-    json_file_path = os.path.join(os.path.dirname(__file__), 'filter_list.json')
-    filter_list = []
-    with open(json_file_path, 'r') as filter_file:
-        try:
-            filter_list = json.load(filter_file)
-        except json.JSONDecodeError as err:
-            debug("ERROR reading json file: %s" % err)
-    return filter_list
-
-
-def filter_string(string, filter_list):
-    """ iterate through list of banned words and replace for given string """
-    for pattern, replacement in filter_list:
-        string = re.sub(pattern, replacement, string)
-    return string
-
-
 def clean_mp3_id3_tags(audiofile):
     """ remove any ID3 tags that we don't like """
     filter_list = get_filter_list()
@@ -227,8 +185,8 @@ def clean_mp3_id3_tags(audiofile):
     audiofile.tag.title = filter_string(audiofile.tag.title, filter_list)
     audiofile.tag.album = filter_string(audiofile.tag.album, filter_list)
     for comment in audiofile.tag.comments:
-        comment.text = ''
-        comment.data = ''
+        comment.text = "downloaded from themixtapesite.com"
+        comment.data = "downloaded from themixtapesite.com"
     audiofile.tag.save()
     return audiofile
 
@@ -379,7 +337,7 @@ def get_mixtape_info(post_id):
     Makes an SQL query to get the path to the ZIP assosiated with post_id
     """
     debug("Getting path")
-    db = MySQLdb.connect(**sql_cred)
+    db = MySQLdb.connect(**config['database'])
     cur = db.cursor()
     cur.execute('SELECT meta_value FROM tm1_postmeta WHERE post_id = %s AND meta_key = "file_url"' % post_id)
     url = cur.fetchall()[0][0] # First row, first cell returned
@@ -404,7 +362,7 @@ def publish_post(post_id, url, post_name):
         debug("Try #%s" % count)
         try:
             debug("Connecting to MySQL databse")
-            db = MySQLdb.connect(**sql_cred)
+            db = MySQLdb.connect(**config['database'])
             cur = db.cursor()
             debug("Setting publish status")
             cur.execute(r'UPDATE tm1_posts SET post_status="publish", post_name="testpostname" WHERE ID = %s;' % post_id)

@@ -1,0 +1,12 @@
+{
+    "database": {
+        "host": "",
+        "user": "",
+        "passwd": "",
+        "db": ""
+    },
+    "youtube": {
+        "user": "",
+        "password": ""
+    }
+}
