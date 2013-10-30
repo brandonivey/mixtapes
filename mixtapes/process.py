@@ -294,29 +294,27 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                     video_path = os.path.join(VIDEO_DIR, name)
                     video_path = video_path.replace('mp3', 'mp4')
                     if images:
-                        if generate_video(preview_path, target_path=video_path, image_path=images.pop()):
-                            ## upload to youtube
-                            upload_youtube(
-                                video_path,
-                                config['youtube']['user'],
-                                config['youtube']['password'],
-                                audiofile.tag.title,
-                                '%s - %s' % (audiofile.tag.artist, audiofile.tag.title)
-                            )
-                        else:
-                            debug("Unable to generate video file")
+                        vid_args = {
+                            'full_path': preview_path,
+                            'target_path': video_path,
+                            'image_path': images.pop()
+                        }
                     else:
-                        if generate_video(preview_path, target_path=video_path):
-                            ## upload to youtube
-                            upload_youtube(
-                                video_path,
-                                config['youtube']['user'],
-                                config['youtube']['password'],
-                                audiofile.tag.title,
-                                '%s - %s' % (audiofile.tag.artist, audiofile.tag.title)
-                            )
-                        else:
-                            debug("Unable to generate video file")
+                        vid_args = {
+                            'full_path': preview_path,
+                            'target_path': video_path
+                        }
+                    if generate_video(**vid_args):
+                        ## upload to youtube
+                        upload_youtube(
+                            video_path,
+                            config['youtube']['user'],
+                            config['youtube']['password'],
+                            audiofile.tag.title,
+                            '%s - %s' % (audiofile.tag.artist, audiofile.tag.title)
+                        )
+                    else:
+                        debug("Unable to generate video file")
                 else:
                     debug("Unable to generate preview file")
                 timing.log(
