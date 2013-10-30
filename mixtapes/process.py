@@ -2,6 +2,7 @@
 import timing
 import zipfile
 import os
+import pipes
 import shlex
 import glob
 import shutil
@@ -165,9 +166,12 @@ def upload_youtube(full_path, email, password, title, description):
     """
     send to youtube
     """
-    full_path = full_path.replace(" ", "\ ")
-    cmd_string = 'youtube-upload --email="%s" --password="%s" --title="%s" --description="%s" --category="Music" --keywords="mixtapes, themixtapesite.com" "%s"' % (
-        email, password, title, description, full_path
+    cmd_string = 'youtube-upload --email=%s --password=%s --title=%s --description=%s --category="Music" --keywords="themixtapesite.com" %s' % (
+        pipes.quote(email),
+        pipes.quote(password),
+        pipes.quote(title),
+        pipes.quote(description),
+        pipes.quote(full_path)
     )
 
     return execute_external_call(cmd_string)
