@@ -165,6 +165,7 @@ def upload_youtube(full_path, email, password, title, description):
     """
     send to youtube
     """
+    full_path = full_path.replace(" ", "\ ")
     cmd_string = 'youtube-upload --email="%s" --password="%s" --title="%s" --description="%s" --category="Music" --keywords="mixtapes, themixtapesite.com" "%s"' % (
         email, password, title, description, full_path
     )
@@ -295,15 +296,20 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                     if images:
                         if generate_video(preview_path, target_path=video_path, image_path=images.pop()):
                             ## upload to youtube
-                            # upload_video(video_path)
-                            pass
+                            upload_youtube(
+                                video_path,
+                                config['youtube']['user'],
+                                config['youtube']['password'],
+                                audiofile.tag.title,
+                                '%s - %s' % (audiofile.tag.artist, audiofile.tag.title)
+                            )
                         else:
                             debug("Unable to generate video file")
                     else:
                         if generate_video(preview_path, target_path=video_path):
                             ## upload to youtube
                             upload_youtube(
-                                full_path,
+                                video_path,
                                 config['youtube']['user'],
                                 config['youtube']['password'],
                                 audiofile.tag.title,
