@@ -400,7 +400,7 @@ def process_mixtape(ID):
     debug("Mixtape slug: %s" % post_slug)
     url = process_zip(zip_path, **args)
     # The variable args is searched at the global scope
-    # publish_post(int(ID), url, post_slug)
+    publish_post(int(ID), url, post_slug)
     debug("Mixtape processed: %s" % url)
 
 
