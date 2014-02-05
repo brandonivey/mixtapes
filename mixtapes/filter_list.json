@@ -9,7 +9,5 @@
     ["datpiff.com", ""],
     ["datpiff", ""],
     ["getrightmusic", ""],
-    ["downloaded from", ""],
-    ["([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})", ""],
-    ["\\b(([\\w-]+://?|www[.])[^\\s()<>]+(?:\\([\\w\\d]+\\)|([^[:punct:]\\s]|/)))", ""]
+    ["downloaded from", ""]
 ]

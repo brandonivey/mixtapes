@@ -177,6 +177,15 @@ def upload_youtube(full_path, email, password, title, description):
     return execute_external_call(cmd_string)
 
 
+def pre_cache_mp3_id3(file_path):
+    """
+    call external php script to cache mp3 id3 tag info to database
+    """
+    cmd_string = '/export/getID3/processid3.php %s' % file_path
+
+    return execute_external_call(cmd_string)
+
+
 def get_images(directory):
     """ return the full paths to all the image files in a given directory """
     images = []
