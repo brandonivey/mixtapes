@@ -338,7 +338,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
             conn.upload(zipped_name)
             os.remove(zipped_name)
             ## Call php script to pre-cache mp3 info
-            pre_cache_mp3_id3(conn.s3_path)
+            pre_cache_mp3_id3(FULL_DIR)
     finally:
         debug('Cleaning up')
         if not keep_dirs:
