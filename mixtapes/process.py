@@ -335,7 +335,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                 )
             ## Call php script to pre-cache mp3 info
             debug("calling pre_cache php script: processid3.php")
-            pre_cache_mp3_id3(FULL_DIR)
+            pre_cache_mp3_id3(conn.s3_path)
             ## generate zip archive, upload, and delete local copy
             zipped_name = zip_folder(FULL_DIR, name=os.path.basename(zip_path))
             conn.upload(zipped_name)
