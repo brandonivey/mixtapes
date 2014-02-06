@@ -333,12 +333,13 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                 timing.log(
                     "Finished processing \"%s\"" % name, timing.clock() - local_start_time
                 )
+            ## Call php script to pre-cache mp3 info
+            debug("calling pre_cache php script: processid3.php")
+            pre_cache_mp3_id3(FULL_DIR)
             ## generate zip archive, upload, and delete local copy
             zipped_name = zip_folder(FULL_DIR, name=os.path.basename(zip_path))
             conn.upload(zipped_name)
             os.remove(zipped_name)
-            ## Call php script to pre-cache mp3 info
-            pre_cache_mp3_id3(FULL_DIR)
     finally:
         debug('Cleaning up')
         if not keep_dirs:
