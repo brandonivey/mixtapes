@@ -317,17 +317,17 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
                             'full_path': preview_path,
                             'target_path': video_path
                         }
-                    if generate_video(**vid_args):
-                        ## upload to youtube
-                        upload_youtube(
-                            video_path,
-                            config['youtube']['user'],
-                            config['youtube']['password'],
-                            audiofile.tag.title,
-                            '%s - %s' % (audiofile.tag.artist, audiofile.tag.title)
-                        )
-                    else:
-                        debug("Unable to generate video file")
+                    # if generate_video(**vid_args):
+                    #     ## upload to youtube
+                    #     upload_youtube(
+                    #         video_path,
+                    #         config['youtube']['user'],
+                    #         config['youtube']['password'],
+                    #         audiofile.tag.title,
+                    #         '%s - %s' % (audiofile.tag.artist, audiofile.tag.title)
+                    #     )
+                    # else:
+                    #     debug("Unable to generate video file")
                 else:
                     debug("Unable to generate preview file")
                 timing.log(
