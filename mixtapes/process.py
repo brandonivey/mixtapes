@@ -389,7 +389,7 @@ def publish_post(post_id, url, post_name):
             db = MySQLdb.connect(**config['database'])
             cur = db.cursor()
             debug("Setting publish status")
-            cur.execute(r'UPDATE tm1_posts SET post_status="publish", post_name="testpostname" WHERE ID = %s;' % post_id)
+            cur.execute(r'UPDATE tm1_posts SET post_status="publish" WHERE ID = %s;' % post_id)
             debug("Setting ZIP URL")
             cur.execute(r'UPDATE tm1_postmeta SET meta_value="%s" WHERE post_id = %s AND meta_key = "file_url";' % (url, post_id))
             debug("Setting zipping_status to processed")
