@@ -251,6 +251,7 @@ def process_zip(zip_path, keep_dirs=True, keep_orig=False, save_rest=True):
            Save non-ZIP files: %s" % (zip_path, keep_dirs, keep_orig, save_rest))
     debug("Loading ZIP file for reading")
     mixtape = zipfile.ZipFile(zip_path, 'r')
+    zipped_name = None
 
     BASE_PATH = os.path.join(ROOT_DIR, 'output')
     FULL_DIR = os.path.join(BASE_PATH, 'full')
@@ -380,7 +381,7 @@ def publish_post(post_id, url, post_name):
     """
     Mark post_id as published and processed, set ZIP URL
     """
-    debug("Trying to publish post")
+    debug("Trying to publish post: id=%s url=%s" % (post_id, url))
     count = 0
     while 1:
         debug("Try #%s" % count)
@@ -399,7 +400,7 @@ def publish_post(post_id, url, post_name):
             cur.close()
             db.commit()
             # Save our changes to the database
-            debug("Post published")
+            debug("Post published: %s" % url)
             break
         except MySQLdb.Error as e:
             debug("MySQL error: %s; Trying again." % e.message)
