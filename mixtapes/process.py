@@ -198,13 +198,17 @@ def get_images(directory):
 def clean_mp3_id3_tags(audiofile):
     """ remove any ID3 tags that we don't like """
     filter_list = get_filter_list()
-    audiofile.tag.artist = filter_string(audiofile.tag.artist, filter_list)
-    audiofile.tag.title = filter_string(audiofile.tag.title, filter_list)
-    audiofile.tag.album = filter_string(audiofile.tag.album, filter_list)
-    for comment in audiofile.tag.comments:
-        comment.text = u'downloaded from themixtapesite.com'
-        comment.data = u'downloaded from themixtapesite.com'
-    audiofile.tag.save()
+    try:
+        audiofile.tag.artist = filter_string(audiofile.tag.artist, filter_list)
+        audiofile.tag.title = filter_string(audiofile.tag.title, filter_list)
+        audiofile.tag.album = filter_string(audiofile.tag.album, filter_list)
+        for comment in audiofile.tag.comments:
+            comment.text = u'downloaded from themixtapesite.com'
+            comment.data = u'downloaded from themixtapesite.com'
+        audiofile.tag.save()
+    except Exception as exc:
+        debug('Caught exception trying to clean id3 tags for "%s"' % audiofile)
+        debug('Exception: %s' % exc)
     return audiofile
 
 
